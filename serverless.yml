@@ -1,0 +1,40 @@
+service: serverless-node-rest-api
+
+provider:
+  name: aws
+  runtime: nodejs6.10
+
+functions:
+  petsCreate:
+    handler: pets.create
+    events: # The Events that trigger this Function
+      - http: post pets/create
+  petsRead:
+    handler: pets.read
+    events:  # The Events that trigger this Function
+      - http: read pets/read
+  petsCreate:
+    handler: pets.create
+    events: # The Events that trigger this Function
+      - http: post pets/create
+  petsDelete:
+    handler: pets.delete
+    events:  # The Events that trigger this Function
+      - http: delete pets/delete
+
+# The "Resources" your "Functions" use.  Raw AWS CloudFormation goes in here.
+resources:
+  Resources:
+    usersTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: usersTable
+        AttributeDefinitions:
+          - AttributeName: email
+            AttributeType: S
+        KeySchema:
+          - AttributeName: email
+            KeyType: HASH
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
