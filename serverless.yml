@@ -3,38 +3,75 @@ service: serverless-node-rest-api
 provider:
   name: aws
   runtime: nodejs6.10
+  environment:
+    DYNAMODB_TABLE: ${self:service}-${opt:stage, self:provider.stage}
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - dynamodb:Query
+        - dynamodb:Scan
+        - dynamodb:GetItem
+        - dynamodb:PutItem
+        - dynamodb:UpdateItem
+        - dynamodb:DeleteItem
+      Resource: "arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/${self:provider.environment.DYNAMODB_TABLE}"
 
 functions:
-  petsCreate:
-    handler: pets.create
-    events: # The Events that trigger this Function
-      - http: post pets/create
-  petsRead:
-    handler: pets.read
-    events:  # The Events that trigger this Function
-      - http: read pets/read
-  petsCreate:
-    handler: pets.create
-    events: # The Events that trigger this Function
-      - http: post pets/create
-  petsDelete:
-    handler: pets.delete
-    events:  # The Events that trigger this Function
-      - http: delete pets/delete
+  create:
+    handler: pets/create.create
+    events:
+      - http:
+          path: pets
+          method: post
+          cors: true
 
-# The "Resources" your "Functions" use.  Raw AWS CloudFormation goes in here.
+  list:
+    handler: pets/list.list
+    events:
+      - http:
+          path: pets
+          method: get
+          cors: true
+
+  get:
+    handler: pets/get.get
+    events:
+      - http:
+          path: pets/{id}
+          method: get
+          cors: true
+
+  update:
+    handler: pets/update.update
+    events:
+      - http:
+          path: pets/{id}
+          method: put
+          cors: true
+
+  delete:
+    handler: pets/delete.delete
+    events:
+      - http:
+          path: pets/{id}
+          method: delete
+          cors: true
+
 resources:
   Resources:
-    usersTable:
+    PetsTable:
       Type: AWS::DynamoDB::Table
+      DeletionPolicy: Retain # Keeps around the DynamoDB resource when we redeploy/destroy
       Properties:
-        TableName: usersTable
         AttributeDefinitions:
-          - AttributeName: email
+          -
+            AttributeName: id
             AttributeType: S
         KeySchema:
-          - AttributeName: email
+          -
+            AttributeName: id
             KeyType: HASH
         ProvisionedThroughput:
           ReadCapacityUnits: 1
           WriteCapacityUnits: 1
+        TableName: ${self:provider.environment.DYNAMODB_TABLE}
